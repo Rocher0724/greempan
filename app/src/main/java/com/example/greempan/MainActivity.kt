@@ -13,15 +13,21 @@ import android.graphics.ImageDecoder
 import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
 import android.os.Build
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
 import android.util.Log
 import android.view.View
+import android.view.View.OnTouchListener
 import android.widget.Toast
+import androidx.activity.viewModels
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.databinding.DataBindingUtil
+import androidx.lifecycle.Observer
+import com.example.greempan.viewModel.MainViewModel
+import com.example.greempan.databinding.ActivityMainBinding
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -76,14 +82,17 @@ class MainActivity : AppCompatActivity() {
   }
 
   private var permissionStorage = arrayOf(
-      Manifest.permission.READ_EXTERNAL_STORAGE,
-      Manifest.permission.WRITE_EXTERNAL_STORAGE
+    Manifest.permission.READ_EXTERNAL_STORAGE,
+    Manifest.permission.WRITE_EXTERNAL_STORAGE
   )
   private val reqCodeSelectImage: Int = 100
   private val reqCodeExternalStorage: Int = 101
 
   private fun verifyStoragePermission() {
-    val readPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+    val readPermission = ContextCompat.checkSelfPermission(
+      this,
+      Manifest.permission.WRITE_EXTERNAL_STORAGE
+    )
     if (readPermission != PackageManager.PERMISSION_GRANTED) {
       ActivityCompat.requestPermissions(this, permissionStorage, reqCodeExternalStorage)
     } else {
@@ -149,7 +158,10 @@ class MainActivity : AppCompatActivity() {
           put(MediaStore.MediaColumns.MIME_TYPE, "image/jpg")
           put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES)
         }
-        val imageUri: Uri? = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
+        val imageUri: Uri? = resolver.insert(
+          MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+          contentValues
+        )
         fos = imageUri?.let { resolver.openOutputStream(it) }
         resolver.openOutputStream(imageUri!!)
 
@@ -174,7 +186,11 @@ class MainActivity : AppCompatActivity() {
     }
   }
 
-  override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+  override fun onRequestPermissionsResult(
+    requestCode: Int,
+    permissions: Array<out String>,
+    grantResults: IntArray
+  ) {
     super.onRequestPermissionsResult(requestCode, permissions, grantResults)
     when (requestCode) {
       reqCodeExternalStorage -> {
@@ -215,8 +231,8 @@ class MainActivity : AppCompatActivity() {
         }
       } else {
         BitmapDrawable(
-            context.resources,
-            MediaStore.Images.Media.getBitmap(context.contentResolver, this)
+          context.resources,
+          MediaStore.Images.Media.getBitmap(context.contentResolver, this)
         ).bitmap
       }
 }
