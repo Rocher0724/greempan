@@ -1,24 +1,27 @@
-package com.example.greempan
+package com.example.greempan.mvvm.view
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.*
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
+import androidx.lifecycle.MutableLiveData
 import com.example.greempan.mvvm.model.DrawingState
 import java.util.*
 
-class DrawViewKt: View {
+class DrawingView: View {
     constructor(context: Context) : this(context, null)
     constructor(context: Context, attrs: AttributeSet?) : this(context, attrs, 0)
     constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
 
-    private var undoStates = ArrayList<DrawingState>()
-    private var redoStates = ArrayList<DrawingState>()
+    private var undoStates = MutableLiveData<ArrayList<DrawingState>>()
+    private var redoStates = MutableLiveData<ArrayList<DrawingState>>()
 
     private var path: Path
 
-    var penPaint: Paint = Paint(Paint.DEV_KERN_TEXT_FLAG)
+//    var penPaint: Paint = Paint(Paint.DEV_KERN_TEXT_FLAG)
+    private lateinit var penPaint: MutableLiveData<Paint>
 
     var transPaint: Paint = Paint(Paint.DEV_KERN_TEXT_FLAG)
     var clear = PorterDuffXfermode(PorterDuff.Mode.CLEAR)
@@ -33,14 +36,14 @@ class DrawViewKt: View {
 
     private var pointX: Float = 0.toFloat()
     private var pointY: Float = 0.toFloat()
-    private var undoRedoClickFlag = false
+    private var undoRedoClickFlag = MutableLiveData<Boolean>()
 
     init {
-        penPaint.isAntiAlias = true
-        penPaint.color = Color.BLUE
-        penPaint.strokeWidth = 5f
-        penPaint.style = Paint.Style.STROKE
-
+//        penPaint.value.isAntiAlias = true
+//        penPaint.value.color = Color.BLUE
+//        penPaint.value.strokeWidth = 5f
+//        penPaint.value.style = Paint.Style.STROKE
+//
         transPaint.isAntiAlias = true
         transPaint.color = Color.TRANSPARENT
         transPaint.strokeWidth = 5f
@@ -59,47 +62,23 @@ class DrawViewKt: View {
         imageCanvas = Canvas(imageBackgroundBitmap!!)
     }
 
-    fun setToPen() {
-        penPaint.xfermode = null
-        penPaint.strokeWidth = 5f
-    }
-
-    fun setToEraser() {
-        penPaint.xfermode = clear
-        penPaint.strokeWidth = 50f
-    }
-
+    @SuppressLint("DrawAllocation")
     override fun onDraw(canvas: Canvas) {
-        if (undoRedoClickFlag) {
+        if (undoRedoClickFlag.value!!) {
             drawingBitmap = resetBitmap!!.copy(Bitmap.Config.ARGB_8888, true)
             penDrawingCanvas = Canvas(drawingBitmap!!)
-            for (p in undoStates) {
+            for (p in undoStates.value!!) {
                 penDrawingCanvas!!.drawPath(p.path, p.paint)
             }
-            undoRedoClickFlag = false
+            undoRedoClickFlag.value = false
         }
 
         canvas.drawBitmap(imageBackgroundBitmap!!, 0f, 0f, bitmapPaint)
         canvas.drawBitmap(drawingBitmap!!, 0f, 0f, bitmapPaint)
     }
-    fun undo() {
-        undoRedoClickFlag = true
-        if (undoStates.size > 0) {
-            redoStates.add(undoStates.removeAt(undoStates.size - 1))
-        }
-        invalidate()
-    }
-
-    fun redo() {
-        undoRedoClickFlag = true
-        if (redoStates.size > 0) {
-            undoStates.add(redoStates.removeAt(redoStates.size - 1))
-        }
-        invalidate()
-    }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
-        redoStates.clear()
+        redoStates.value!!.clear()
         pointX = event.getX(0)
         pointY = event.getY(0)
         when (event.action) {
@@ -110,11 +89,14 @@ class DrawViewKt: View {
             }
             MotionEvent.ACTION_MOVE -> {
                 path.lineTo(pointX, pointY)
-                penDrawingCanvas!!.drawPath(path, penPaint)
+                penPaint.value?.let { penDrawingCanvas!!.drawPath(path, it) }
             }
             MotionEvent.ACTION_UP -> {
-                penDrawingCanvas!!.drawPath(path, penPaint)
-                undoStates.add(DrawingState(path, penPaint))
+                penPaint.value?.let {
+                    penDrawingCanvas!!.drawPath(path, it)
+                    undoStates.value!!.add(DrawingState(path, it))
+                }
+
                 path = Path()
             }
         }
@@ -124,6 +106,23 @@ class DrawViewKt: View {
 
     fun setBitmap(bitmap: Bitmap?) {
         imageCanvas!!.drawBitmap(bitmap!!, 0f, 0f, null)
+    }
+
+    fun setUndoState (value: MutableLiveData<ArrayList<DrawingState>>) {
+        undoStates = value
+    }
+    fun setRedoState (value: MutableLiveData<ArrayList<DrawingState>>) {
+        redoStates = value
+    }
+    fun setPenPaint (value: MutableLiveData<Paint>) {
+        penPaint = value
+        penPaint.value!!.isAntiAlias = true
+        penPaint.value!!.color = Color.BLUE
+        penPaint.value!!.strokeWidth = 5f
+        penPaint.value!!.style = Paint.Style.STROKE
+    }
+    fun setUndoRedoFlag (value: MutableLiveData<Boolean>) {
+        undoRedoClickFlag = value
     }
 
 }
