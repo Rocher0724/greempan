@@ -5,8 +5,7 @@ import android.graphics.*
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
-import androidx.lifecycle.MutableLiveData
-import com.example.greempan.model.DrawingState
+import com.example.greempan.mvvm.model.DrawingState
 import java.util.*
 
 class DrawViewKt: View {
@@ -17,13 +16,9 @@ class DrawViewKt: View {
     private var undoStates = ArrayList<DrawingState>()
     private var redoStates = ArrayList<DrawingState>()
 
-    private var undoStates2 = MutableLiveData<ArrayList<DrawingState>>()
-    private var redoStates2 = MutableLiveData<ArrayList<DrawingState>>()
-
     private var path: Path
 
     var penPaint: Paint = Paint(Paint.DEV_KERN_TEXT_FLAG)
-    lateinit var penPaint2: MutableLiveData<Paint>
 
     var transPaint: Paint = Paint(Paint.DEV_KERN_TEXT_FLAG)
     var clear = PorterDuffXfermode(PorterDuff.Mode.CLEAR)
@@ -39,9 +34,6 @@ class DrawViewKt: View {
     private var pointX: Float = 0.toFloat()
     private var pointY: Float = 0.toFloat()
     private var undoRedoClickFlag = false
-
-    private lateinit var imageCanvas2: MutableLiveData<Canvas>
-
 
     init {
         penPaint.isAntiAlias = true
@@ -132,16 +124,6 @@ class DrawViewKt: View {
 
     fun setBitmap(bitmap: Bitmap?) {
         imageCanvas!!.drawBitmap(bitmap!!, 0f, 0f, null)
-    }
-
-    fun setUndoState2 (value: MutableLiveData<ArrayList<DrawingState>>) {
-        undoStates2 = value
-    }
-    fun setRedoState2 (value: MutableLiveData<ArrayList<DrawingState>>) {
-        redoStates2 = value
-    }
-    fun setPenPaint (value: MutableLiveData<Paint>) {
-        penPaint2 = value
     }
 
 }

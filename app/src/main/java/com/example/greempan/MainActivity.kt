@@ -9,6 +9,7 @@ import android.content.res.Configuration
 import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.ImageDecoder
 import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
@@ -18,23 +19,24 @@ import android.os.Environment
 import android.provider.MediaStore
 import android.util.Log
 import android.view.View
-import android.view.View.OnTouchListener
+import android.widget.Button
 import android.widget.Toast
-import androidx.activity.viewModels
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.result.registerForActivityResult
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.databinding.DataBindingUtil
-import androidx.lifecycle.Observer
-import com.example.greempan.viewModel.MainViewModel
-import com.example.greempan.databinding.ActivityMainBinding
+import com.example.greempan.mvvm.model.DrawingState
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 import java.io.OutputStream
+import java.util.ArrayList
 
 class MainActivity : AppCompatActivity() {
   lateinit var drawView: DrawViewKt
+  private var btnList = ArrayList<Button>()
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -47,25 +49,53 @@ class MainActivity : AppCompatActivity() {
     drawView = findViewById(R.id.drawView)
 
     findViewById<View>(R.id.btnUndo).setOnClickListener {
+      if (btnList.hasNotContains(it as Button)) btnList.add(it)
+      changeBtnColor(it)
       drawView.undo()
     }
     findViewById<View>(R.id.btnRedo).setOnClickListener {
+      if (btnList.hasNotContains(it as Button)) btnList.add(it)
+      changeBtnColor(it)
       drawView.redo()
     }
     findViewById<View>(R.id.btnErase).setOnClickListener {
+      if (btnList.hasNotContains(it as Button)) btnList.add(it)
+      changeBtnColor(it)
       drawView.setToEraser()
     }
     findViewById<View>(R.id.btnPen).setOnClickListener {
+      if (btnList.hasNotContains(it as Button)) btnList.add(it)
+      changeBtnColor(it)
       drawView.setToPen()
     }
     findViewById<View>(R.id.btnAdd).setOnClickListener {
+      if (btnList.hasNotContains(it as Button)) btnList.add(it)
+      changeBtnColor(it)
       verifyStoragePermission()
     }
     findViewById<View>(R.id.btnSave).setOnClickListener {
+      if (btnList.hasNotContains(it as Button)) btnList.add(it)
+      changeBtnColor(it)
       saveDrawingBoard()
     }
     findViewById<View>(R.id.btnLoad).setOnClickListener {
+      if (btnList.hasNotContains(it as Button)) btnList.add(it)
+      changeBtnColor(it)
       pickImageFromPictureFolder()
+    }
+  }
+
+  private fun ArrayList<Button>.hasNotContains(btn: Button): Boolean {
+    return !this.contains(btn)
+  }
+
+  private fun changeBtnColor(clickedBtn: Button) {
+    for (btn in btnList) {
+      if (btn == clickedBtn) {
+        btn.setBackgroundColor(Color.parseColor("#707070"))
+        continue
+      }
+      btn.setBackgroundColor(Color.parseColor("#B7B7B7"))
     }
   }
 
@@ -73,10 +103,10 @@ class MainActivity : AppCompatActivity() {
     super.onConfigurationChanged(newConfig)
     when (newConfig.orientation) {
       Configuration.ORIENTATION_LANDSCAPE -> {
-        Toast.makeText(applicationContext, "가로", Toast.LENGTH_SHORT).show()
+//        Toast.makeText(applicationContext, "가로", Toast.LENGTH_SHORT).show()
       }
       Configuration.ORIENTATION_PORTRAIT -> {
-        Toast.makeText(applicationContext, "세로", Toast.LENGTH_SHORT).show()
+//        Toast.makeText(applicationContext, "세로", Toast.LENGTH_SHORT).show()
       }
     }
   }
@@ -85,18 +115,19 @@ class MainActivity : AppCompatActivity() {
     Manifest.permission.READ_EXTERNAL_STORAGE,
     Manifest.permission.WRITE_EXTERNAL_STORAGE
   )
-  private val reqCodeSelectImage: Int = 100
-  private val reqCodeExternalStorage: Int = 101
 
   private fun verifyStoragePermission() {
-    val readPermission = ContextCompat.checkSelfPermission(
-      this,
-      Manifest.permission.WRITE_EXTERNAL_STORAGE
-    )
-    if (readPermission != PackageManager.PERMISSION_GRANTED) {
-      ActivityCompat.requestPermissions(this, permissionStorage, reqCodeExternalStorage)
-    } else {
-      pickImageFromGallery()
+    requestMultiplePermissions.launch(permissionStorage)
+  }
+
+  private val requestMultiplePermissions = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
+    run {
+      if (permissions[Manifest.permission.READ_EXTERNAL_STORAGE] == true
+          && permissions[Manifest.permission.WRITE_EXTERNAL_STORAGE] == true) {
+        pickImageFromGallery()
+      } else {
+        Toast.makeText(this, "Not Available", Toast.LENGTH_SHORT).show()
+      }
     }
   }
 
@@ -104,34 +135,24 @@ class MainActivity : AppCompatActivity() {
     val intent = Intent(Intent.ACTION_PICK)
     intent.type = MediaStore.Images.Media.CONTENT_TYPE
     intent.data = MediaStore.Images.Media.EXTERNAL_CONTENT_URI
-    startActivityForResult(intent, reqCodeSelectImage)
+    requestActivity.launch(intent)
+  }
+
+  private val requestActivity: ActivityResultLauncher<Intent> = registerForActivityResult(
+      ActivityResultContracts.StartActivityForResult()) { activityResult ->
+    if (activityResult.resultCode == RESULT_OK) {
+      try {
+        val bitmap: Bitmap = activityResult.data!!.data!!.uriToBitmap(this)
+        drawView.setBitmap(bitmap)
+      } catch (e: IOException) {
+        e.printStackTrace()
+      }
+    }
   }
 
   private fun pickImageFromPictureFolder() {
-//        val intent = Intent(Intent.ACTION_PICK)
-//        intent.type = "image/*"
-//        intent.data = MediaStore.Images.Media.EXTERNAL_CONTENT_URI
-
-//        startActivityForResult(intent, reqCodeSelectImage)
-//        put(MediaStore.MediaColumns.DISPLAY_NAME, filename)
-//        put(MediaStore.MediaColumns.MIME_TYPE, "image/jpg")
-//        put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES)
-//    val drawingLayout = findViewById<View>(R.id.paintLayout) ?: return
-//
-//    val sdf = SimpleDateFormat("yyyyMMddHHmmss") //년,월,일,시간 포멧 설정
-//    val time = Date() //파일명 중복 방지를 위해 사용될 현재시간
-//    val currentTime = sdf.format(time) //String형 변수에 저장
-//
-//    val path = this.getExternalFilesDir(null).toString() + "/Camera"
-//    Log.d("fw", "path : $path")
-//    val file = File(path)
-//
-//    if (file.list().isNotEmpty()) {
-//      Log.d("fw", "" + file.list()[0])
-//    } else {
-//      Log.d("fw", "empty")
-//    }
-
+    // TODO ???
+    verifyStoragePermission()
   }
 
 
@@ -174,7 +195,7 @@ class MainActivity : AppCompatActivity() {
 
     fos?.use {
       bitmap.compress(Bitmap.CompressFormat.JPEG, 100, it)
-      Toast.makeText(this, "Captured View and saved to Gallery", Toast.LENGTH_SHORT).show()
+      Toast.makeText(this, "Captured GreemPan and saved to Gallery", Toast.LENGTH_SHORT).show()
     }
   }
 
@@ -183,42 +204,6 @@ class MainActivity : AppCompatActivity() {
     val bitmap = getBitmapFromView(drawingLayout)
     if (bitmap != null) {
       saveBitmapToPictureFolder(bitmap)
-    }
-  }
-
-  override fun onRequestPermissionsResult(
-    requestCode: Int,
-    permissions: Array<out String>,
-    grantResults: IntArray
-  ) {
-    super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-    when (requestCode) {
-      reqCodeExternalStorage -> {
-        if (grantResults.isNotEmpty()) {
-          pickImageFromGallery()
-        } else {
-          Toast.makeText(this, "Not Available", Toast.LENGTH_SHORT).show()
-        }
-      }
-    }
-  }
-
-  override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-    super.onActivityResult(requestCode, resultCode, data)
-    when (requestCode) {
-      reqCodeExternalStorage -> {
-        if (resultCode == RESULT_OK) pickImageFromGallery()
-      }
-      reqCodeSelectImage -> {
-        if (resultCode == RESULT_OK) {
-          try {
-            val bitmap: Bitmap = data!!.data!!.uriToBitmap(this)
-            drawView.setBitmap(bitmap)
-          } catch (e: IOException) {
-            e.printStackTrace()
-          }
-        }
-      }
     }
   }
 

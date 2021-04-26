@@ -1,13 +1,10 @@
-package com.example.greempan.adapter
+package com.example.greempan.mvvm.adapter
 
 import android.graphics.Paint
-import android.view.View
-import androidx.core.view.isVisible
 import androidx.databinding.BindingAdapter
 import androidx.lifecycle.MutableLiveData
-import com.example.greempan.DrawViewKt
-import com.example.greempan.model.DrawingState
-import com.example.greempan.view.DrawingView
+import com.example.greempan.mvvm.model.DrawingState
+import com.example.greempan.mvvm.view.DrawingView
 import java.util.ArrayList
 
 object BindingAdapter {

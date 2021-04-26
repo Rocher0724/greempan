@@ -1,12 +1,13 @@
-package com.example.greempan.view
+package com.example.greempan.mvvm.view
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.*
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
 import androidx.lifecycle.MutableLiveData
-import com.example.greempan.model.DrawingState
+import com.example.greempan.mvvm.model.DrawingState
 import java.util.*
 
 class DrawingView: View {
@@ -37,9 +38,6 @@ class DrawingView: View {
     private var pointY: Float = 0.toFloat()
     private var undoRedoClickFlag = MutableLiveData<Boolean>()
 
-    private lateinit var imageCanvas2: MutableLiveData<Canvas>
-
-
     init {
 //        penPaint.value.isAntiAlias = true
 //        penPaint.value.color = Color.BLUE
@@ -64,6 +62,7 @@ class DrawingView: View {
         imageCanvas = Canvas(imageBackgroundBitmap!!)
     }
 
+    @SuppressLint("DrawAllocation")
     override fun onDraw(canvas: Canvas) {
         if (undoRedoClickFlag.value!!) {
             drawingBitmap = resetBitmap!!.copy(Bitmap.Config.ARGB_8888, true)
@@ -124,7 +123,6 @@ class DrawingView: View {
     }
     fun setUndoRedoFlag (value: MutableLiveData<Boolean>) {
         undoRedoClickFlag = value
-
     }
 
 }

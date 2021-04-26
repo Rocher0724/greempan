@@ -1,4 +1,4 @@
-package com.example.greempan.model
+package com.example.greempan.mvvm.model
 
 import android.graphics.Paint
 import android.graphics.Path

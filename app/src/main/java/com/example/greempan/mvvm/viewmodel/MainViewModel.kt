@@ -1,19 +1,10 @@
-package com.example.greempan.viewModel
+package com.example.greempan.mvvm.viewmodel
 
-import android.Manifest
 import android.app.Application
-import android.content.Intent
-import android.content.pm.PackageManager
-import android.graphics.Bitmap
 import android.graphics.Paint
-import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
-import com.example.greempan.MainActivity
-import com.example.greempan.model.DrawingState
-import java.io.IOException
+import com.example.greempan.mvvm.model.DrawingState
 import java.util.*
 
 
